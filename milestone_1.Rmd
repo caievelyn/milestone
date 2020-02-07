@@ -1,0 +1,12 @@
+---
+title: "Milestone_1"
+author: "Evelyn Cai"
+date: "2/7/2020"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+A really cool article I discovered in my Gov 94 seminar on the governance of world regions desribes "hard" and "soft" regions of the world as those that are functionally accepted vs. those whose boundaries or memberships are disagreed upon, respectively. It is titled "Mental maps of global regions: identifying and characterizing “hard” and “soft” regions" by Clarisse Didelon-Loiseau, Sophie de Ruffray & Nicolas Lambert. It was published in 2018 in the *Journal of Cultural Geography*. As of twenty minutes ago, I emailed the author(s) asking for their code/ replication files, as that is not freely available online. What I found really cool was their usage of geospatial mapping tools like ArcGIS to overlay 4k-5k respondents' drawn images over each other and determine which regions had more agreed-upon boundaries vs less clear boundaries. Honestly, I am not sure how I could even replicate this even given the data, as they had to undergo an extra in-between step of coding the drawings so they could use ArcGIS on it, but I think it'd be sick to work with mapping tools as a replication. [Link to the article is here.](https://doi.org/10.1080/08873631.2018.1426950)
