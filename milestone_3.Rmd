@@ -13,6 +13,8 @@ The article I am replicating is Daniel Smith et. al's "Identifying voter prefere
 What I did with the data thus far:
 Their code is all in base R. I rewrote their data pre-processing code and plot-creating code using tidyverse/dplyr stuff. We love tidyverse stuff. Below is the code. I created a series of eight mosaic tables, the first four of which examines gender, the latter four of which examines age. Next, I created a rudimentary AMCE plot which examines the average treatment effect of gender for candidates for the lower house. The mosaic plots are numerically correct and match the original charts. However, the AMCE plot's numbers are wildly different. My next steps are to figure out why they're different and how to fix it.
 
+[Link to my public Github repo for final project milestones is here.](https://github.com/caievelyn/milestone)
+
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
 
