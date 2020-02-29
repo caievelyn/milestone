@@ -1,0 +1,207 @@
+---
+title: 'Milestone 4: Familiarizing with Tinytex'
+author: "Evelyn Cai"
+date: "2/27/2020"
+output:
+  bookdown::pdf_document2:
+    keep_tex: true
+bibliography: ["conjoint-method.bib", "japan.bib"]
+biblio-style: "apalike"
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+
+# Load necessary libraries
+
+library(tidyverse)
+library(utils)
+library(ggmosaic)
+library(ggplot2)
+library(cregg)
+library(tinytex)
+library(bookdown)
+library(gt)
+library(gtsummary)
+
+# Decompress the file (Commented out because already completed once)
+# untar(tarfile = "ReplicationPackage (1).tar.gz")
+
+# Read in .csv files as dataframes
+
+DD_lo <- read_csv("actual-lower-2014-allcandidates.csv")
+DD_up <- read_csv("actual-upper-2013-allcandidates.csv")
+
+# Create bibliography files, commented out because already did so
+
+# knitr::write_bib("knitr", "japan.bib", width = 60)
+# knitr::write_bib("knitr", "conjoint-method.bib", width = 60)
+
+```
+
+```{r pre_processing_data, include = FALSE}
+### Recoding Variables
+
+## System type indicators
+
+# Create a new column called win_type_1 that encodes the results from the
+#DD_lo$result column.
+
+DD_lo <- DD_lo %>%
+  mutate(win_type_1 = as.factor(case_when(result == 1 ~ "SMD",
+                                result == 2 ~"Zombie",
+                                result == 3 ~ "PR",
+                                TRUE ~ NA_character_)),
+         elec_type_1 = case_when(prcode == 0 ~ "SMD",
+                                 kucode == 0 ~ "PR",
+                                 TRUE ~ "Both"),
+         elec_type_2 = as.factor(case_when(elec_type_1 == "SMD" | elec_type_1 == "Both" ~ "SMD/Dual",
+                                 TRUE ~ elec_type_1)))
+
+
+DD_up <- DD_up %>%
+  mutate(win_type_1 = as.factor(districttype),
+         elec_type_1 = win_type_1,
+         win_type_2 = as.factor(case_when(win_type_1 == "SMD" | win_type_1 == "MMD" ~ "SNTV",
+                                win_type_1 == "PR" ~ "PR",
+                                TRUE ~ NA_character_)),
+         elec_type_2 = win_type_2)
+
+# Recode values
+
+DDD <- list(DD_lo, DD_up)
+
+for(i in 1:length(DDD))
+  {DD <- DDD[[i]] %>%
+    mutate(win = case_when(result > 0 ~ 1,
+                           TRUE ~ 0),
+           celeb = as.factor(case_when(celeb == 0 ~ "No",
+                                       celeb == 1 ~ "Yes",
+                                       TRUE ~ NA_character_)),
+           busi_emp = as.factor(case_when(busi_emp == 0 ~ "No",
+                                          busi_emp == 1 ~ "Yes",
+                                          TRUE ~ NA_character_)),
+           busi_exec = as.factor(case_when(busi_exec == 0 ~ "No",
+                                           busi_exec == 1 ~ "Yes",
+                                           TRUE ~ NA_character_)),
+           bcrat = as.factor(case_when(bcrat == 0 ~ "No",
+                                       bcrat == 1 ~ "Yes",
+                                       TRUE ~ NA_character_)),
+           localbcrat = as.factor(case_when(localbcrat == 0 ~ "No",
+                                            localbcrat == 1 ~ "Yes",
+                                            TRUE ~ NA_character_)),
+           pref_assy = as.factor(case_when(pref_assy == 0 ~ "No",
+                                           pref_assy == 1 ~ "Yes",
+                                           TRUE ~ NA_character_)),
+           sec = as.factor(case_when(sec == 0 ~ "No",
+                                     sec == 1 ~ "Yes",
+                                     TRUE ~ NA_character_)),
+           experience_lab = as.character(experience_lab),
+           experience_lab = factor(experience_lab, levels = c("Currently in office, 3+ terms", "Currently in office, 2 terms", "Currently in office, 1 term", "Formerly in office, 3+ terms", "Formerly in office, 2 terms", "Formerly in office, 1 term", "No experience")),
+           age_lab = as.character(case_when(age < 40 ~ "Under 40",
+                                         age >= 40 & age < 60 ~ "50 - 59",
+                                         age >= 60 & age < 70 ~ "60 - 69",
+                                         age >= 70 ~ "70 or over",
+                                         TRUE ~ NA_character_)),
+           age_lab = factor(age_lab, levels = c("70 or over", "60 - 69", "50 - 59", "Under 40")),
+           educ_lab = as.factor(case_when(educ_lab == "Local public university" ~ "Other public university",
+                                          TRUE ~ educ_lab)),
+           party_en = factor(party_en, levels = c("LDP", "Komeito", "JCP", "DPJ")),
+           home_lab = factor(home_lab, ordered = TRUE),
+           dynastic_lab = as_factor(case_when(dynastic_lab == "Local-level elected politician" ~ "Loc. Pol.",
+                                              dynastic_lab == "National-level elected politician" ~ "MP",
+                                              dynastic_lab == "Cabinet minister" ~ "Cab. Min.",
+                                              TRUE ~ "None")))
+           DDD[[i]] <- DD
+}
+
+# Unlist
+
+DD_lo <- DDD[[1]]
+DD_up <- DDD[[2]]
+
+# Reorder Levels
+
+# lower house
+DD_lo %>%
+  mutate(party_en = factor(party_en, levels = c("Independent","Other","PFG","JIP","LDP","Komeito","DPJ","PLP","SDP","JCP")))
+
+# upper house
+DD_up %>%
+  mutate(party_en = factor(party_en, levels = c("Independent","Other","JIP","LDP","Komeito","DPJ","PLP","SDP","JCP")))
+
+## Filter for winners
+
+DD_lo_win <- DD_lo %>%
+  filter(win == 1)
+
+DD_up_win <- DD_up %>%
+  filter(win == 1)
+```
+
+## How many women of various ages were elected from the different parties in 2014?
+
+The gt graphic below explores some of this information. The bicameral legislature in Japan is split into the lower house, the House of Representatives, and the upper house, the House of Councillors.^[Tokyo Review. Retrieved from https://www.tokyoreview.net/2019/07/japan-explained-house-of-councilors] Representatives in both houses are directly elected.
+This conjoint survey method was first introduced to the political science field in 2014 (@R-knitr).
+As you can see from the graph, the majority of women were aged 50 or older (@R-base).
+Also here's a link to my repo.^[Github milestone repo: https://github.com/caievelyn/milestone]
+
+```{r gt_table, echo = FALSE}
+
+# Create a gt table using the lower house data
+
+DD_lo %>%
+  
+  # Filter only for elected candidates who were female
+  
+  filter(win == 1,
+         gender_lab == "Female") %>%
+  select(party_en, age_lab) %>%
+  
+  # Recode NAs for party_en as Independents
+  
+  mutate(party_en = as.character(party_en),
+         party_en = case_when(is.na(party_en) ~ "Independent",
+                              TRUE ~ party_en)) %>%
+  
+  # Count per group of party and age
+  
+  group_by(party_en, age_lab) %>%
+  summarize(ct = n()) %>%
+  ungroup() %>%
+  arrange(desc(age_lab)) %>%
+  
+  # Call gt to create a nice neat table. No need to slice since there are so few
+  # rows to begin with
+  
+  gt() %>%
+  tab_header(title = "Women elected to the Lower House in 2014",
+             subtitle = "Majority of women were 50 or older") %>%
+  cols_label(party_en = "Party",
+             age_lab = "Age Group",
+             ct = "Count")
+```
+
+```{r gtsummary_table, echo = FALSE}
+
+# Rename variables so they look nice for the gtsummary table of regressions
+
+renamed <- DD_lo %>%
+  rename("Experience" = experience_lab,
+         "Gender" = gender_lab,
+         "Education" = educ_lab) %>%
+  
+  # Re-level factors so the regression will display the defaults as the first
+  # level
+  
+  mutate(Experience = factor(Experience, labels = c("No experience", "Formerly in office, 1 term", "Formerly in office, 2 terms", "Formerly in office, 3+ terms", "Currently in office, 1 term", "Currently in office, 2 terms", "Currently in office, 3+ terms")),
+         Gender = factor(Gender, labels = c("Male", "Female")))
+
+fit <- glm(data = renamed, family = "gaussian", 
+                win ~ Experience + Gender + Education)
+
+tbl_regression(fit)
+
+
+```
+
