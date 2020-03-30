@@ -5,7 +5,8 @@ date: "3/29/2020"
 output:
   bookdown::pdf_document2:
     keep_tex: true
-bibliography: ["conjoint-method.bib", "japan.bib"]
+    toc: false
+bibliography: ["conjoint-method.bib", "japan.bib", "salience.bib", "gender.bib", "electoral.bib"]
 biblio-style: "apalike"
 ---
 
@@ -23,6 +24,7 @@ library(tinytex)
 library(bookdown)
 library(gt)
 library(gtsummary)
+library(corrplot)
 
 # Decompress the file (Commented out because already completed once)
 # untar(tarfile = "ReplicationPackage (1).tar.gz")
@@ -42,14 +44,15 @@ DD_up <- read_csv("actual-upper-2013-allcandidates.csv")
 
 ## Replication Paper Overview: *Identifying voter preferences for politicians’ personal attributes: a conjoint experiment in Japan*
 
-In Teppei Yamamoto and Daniel Smith's paper, they explore whether voter preferences for politicians' characteristics impact their decision on who to vote for, and the magnitude of this effect.
-All analysis for this paper, while it is still in progress, can be found at the working Github repo.^[Working repository can be found here: https://github.com/caievelyn/milestone]
-
 **Description of Replication Paper**:
 
-**Replicated Graphic/Table**:
-Below, please find a replicated graphic that displays the difference in average treatment effects of certain variables based on a politician's gender (*Fig. 1*). *Fig. 2* displays a correlation matrix, the likes of which can be found in the Appendix. *Fig. 3* is an image file that is a screenshot of the replication paper's Appendix, for ease of comparison to the replicated graph in *Fig. 2*.
+  In Yusaku Horiuchi, Teppei Yamamoto and Daniel Smith's (2020) paper, they explore which voter preferences for politicians' characteristics impact their decision on who to vote for, and the magnitude of this effect. While it is commonly established that the personal attributes of political candidates do have an impact on voter choice, as they portray in their literature review, they also highlight the fact that certain traits may have more salience than others (@R-yamamoto). They were also interested in the complexities introduced by the interaction between desired personal attributes and characteristics of election systems. For example, Rule and Zimmerman (1994) found that proportional representation (PR) systems tended to do better in terms of gender parity than first-pass-the-post systems (@gender). Additionally, systems that emphasize voting for a candidate as opposed to voting for a party lend more salience to candidates’ personal attributes, giving their attributes’ desirability (or lack thereof) more weight in the eyes of the voter (@R-salience). As such, Horiuchi et al. (2020) wanted to tease out this relationship: Did Japanese voters really prefer male candidates over female candidates at the baseline, or was this preference influenced by characteristics of the system?
 
+Japan is a useful case study because of its high “intra-country variation” in electoral systems (@electoral). Horiuchi *et al.* (2020) tested for whether knowledge of said electoral systems would impact voter preferences using a randomly assigned experiment, and found that there were significant and consistent indications of voter preferences even without priming with knowledge of electoral systems (@R-yamamoto). They conducted a conjoint survey, in which different candidate attributes were completely randomized and presented for a participant to choose the candidate of their choice. This method of conjoint experiments as applied to political science was popularized by Hainmueller *et al.* (@R-conjointmethod). Another method employed in the replication paper was compared observational data of actual politicians to the conjoint experiment results. This comparison revealed that the actual representatives in Japan’s parliament are very different from the “ideal” candidates of the participants, demonstrating that other variables that weren’t captured in the conjoint experiment play a large role in elections, such as party candidate recruitment systems (@R-yamamoto).
+
+
+**Replicated Graphic/Table**:
+Below, please find a replicated graphic that displays the difference in average treatment effects of certain variables based on a politician's gender (*Fig. 1*). *Fig. 2* displays 8 mosaic plots, the likes of which can be found in the Appendix. *Fig. 3* is an image file that is a screenshot of the replication paper's Appendix, for ease of comparison to replicated graphs in *Fig. 2*. All analysis for this paper, while it is still in progress, can be found at the working Github repo.^[Working repository can be found here: https://github.com/caievelyn/milestone]
 
 ```{r pre_processing_data, include = FALSE}
 ### Recoding Variables
@@ -180,10 +183,153 @@ x <- plot(rbind(DD_cj, DD_diff)) +
                  axis.text = element_text(size=10))
 ```
 
-```{r display, echo = FALSE, fig.width= 10, fig.height = 8.5}
+```{r display, echo = FALSE, fig.width= 10, fig.height = 8.5, fig.cap = "The first two columns on the left display the average treatment effects for different variables, keeping the gender of the candidate constant. The third column displays the difference in average treatment effect, subtracting that of males to that of females. As you can see, party and age have large effects on candidate selection. However, when taking the different in AMCEs, there is no substantial difference between traits that are desired in male and female candidates. The average treatment effect can be interpreted as the 'boost' a certain characteristic gives a candidate; negative values indicate hurting the candidate's chances of being chosen, while positive values reflect desirable traits."}
 
 # Display the plot
 
 x
 ```
 
+
+```{r mosaic, echo = FALSE, fig.height = 3, fig.width = 3}
+
+## gender (Fig A.1.a)
+DD_lo$by <- DD_lo$gender_lab
+DD_up$by <- DD_up$gender_lab
+DD_lo_win$by <- DD_lo_win$gender_lab
+DD_up_win$by <- DD_up_win$gender_lab
+
+DD_lo_mosaic <- DD_lo %>%
+  select(elec_type_2, by) %>%
+  group_by(elec_type_2, by) %>%
+  count()
+
+# Mosaic plots by gender
+gender_DD_lo <- ggplot(DD_lo) + 
+  geom_mosaic(aes(x = product(elec_type_2), fill = by)) +
+  theme_classic() +
+  labs(title = "HR Candidates") +
+  scale_y_continuous(breaks = seq(0, 1, by = 0.25),
+                     labels = c("0.00", "0.25", "0.50", "0.75", "1.00")) +
+  theme(axis.title.x = element_blank(),
+        axis.title.y = element_blank(),
+        legend.title = element_blank(),
+        legend.box.margin = margin(),
+        plot.title = element_text(hjust = 0.5),
+        axis.line = element_blank())
+
+gender_DD_up <- ggplot(DD_up) + 
+  geom_mosaic(aes(x = product(elec_type_2), fill = by)) +
+  theme_classic()+
+  labs(title = "HC Candidates") +
+  scale_y_continuous(breaks = seq(0, 1, by = 0.25),
+                     labels = c("0.00", "0.25", "0.50", "0.75", "1.00")) +
+  theme(axis.title.x = element_blank(),
+        axis.title.y = element_blank(),
+        legend.title = element_blank(),
+        legend.box.margin = margin(),
+        plot.title = element_text(hjust = 0.5),
+        axis.line = element_blank())
+
+gender_DD_lo_win <- ggplot(DD_lo_win) + 
+  geom_mosaic(aes(x = product(win_type_1), fill = by)) +
+  theme_classic() +
+  labs(title = "HR Winners") +
+  scale_y_continuous(breaks = seq(0, 1, by = 0.25),
+                     labels = c("0.00", "0.25", "0.50", "0.75", "1.00")) +
+  theme(axis.title.x = element_blank(),
+        axis.title.y = element_blank(),
+        legend.title = element_blank(),
+        legend.box.margin = margin(),
+        plot.title = element_text(hjust = 0.5),
+        axis.line = element_blank())
+
+gender_DD_up_win <- ggplot(DD_up_win) + 
+  geom_mosaic(aes(x = product(elec_type_2), fill = by)) +
+  theme_classic() +
+  labs(title = "HC Winners") +
+  scale_y_continuous(breaks = seq(0, 1, by = 0.25),
+                     labels = c("0.00", "0.25", "0.50", "0.75", "1.00")) +
+  theme(axis.title.x = element_blank(),
+        axis.title.y = element_blank(),
+        legend.title = element_blank(),
+        legend.box.margin = margin(),
+        plot.title = element_text(hjust = 0.5),
+        axis.line = element_blank())
+
+# Display the gender mosaic plots
+
+gender_DD_lo
+gender_DD_up
+gender_DD_lo_win
+gender_DD_up_win
+
+
+# Mosaic plots by age
+age_DD_lo <- ggplot(DD_lo) + 
+  geom_mosaic(aes(x = product(elec_type_2), fill = age_lab)) +
+  theme_classic() +
+  labs(title = "HR Candidates") +
+  scale_y_continuous(breaks = seq(0, 1, by = 0.25),
+                     labels = c("0.00", "0.25", "0.50", "0.75", "1.00")) +
+  theme(axis.title.x = element_blank(),
+        axis.title.y = element_blank(),
+        legend.title = element_blank(),
+        legend.box.margin = margin(),
+        plot.title = element_text(hjust = 0.5),
+        axis.line = element_blank())
+
+age_DD_up <- DD_up %>%
+  mutate(elec_type_2 = factor(elec_type_2, levels = c("SNTV", "PR"))) %>%
+  ggplot() + 
+  geom_mosaic(aes(x = product(elec_type_2), fill = age_lab)) +
+  theme_classic()+
+  labs(title = "HC Candidates") +
+  scale_y_continuous(breaks = seq(0, 1, by = 0.25),
+                     labels = c("0.00", "0.25", "0.50", "0.75", "1.00")) +
+  theme(axis.title.x = element_blank(),
+        axis.title.y = element_blank(),
+        legend.title = element_blank(),
+        legend.box.margin = margin(),
+        plot.title = element_text(hjust = 0.5),
+        axis.line = element_blank())
+
+age_DD_lo_win <- ggplot(DD_lo_win) + 
+  geom_mosaic(aes(x = product(win_type_1), fill = age_lab)) +
+  theme_classic() +
+  labs(title = "HR Winners") +
+  scale_y_continuous(breaks = seq(0, 1, by = 0.25),
+                     labels = c("0.00", "0.25", "0.50", "0.75", "1.00")) +
+  theme(axis.title.x = element_blank(),
+        axis.title.y = element_blank(),
+        legend.title = element_blank(),
+        legend.box.margin = margin(),
+        plot.title = element_text(hjust = 0.5),
+        axis.line = element_blank())
+
+age_DD_up_win <- DD_up_win %>%
+  mutate(elec_type_2 = factor(elec_type_2, levels = c("SNTV", "PR"))) %>%
+  ggplot() +
+  geom_mosaic(aes(x = product(elec_type_2), fill = age_lab)) +
+  theme_classic() +
+  labs(title = "HC Winners") +
+  scale_y_continuous(breaks = seq(0, 1, by = 0.25),
+                     labels = c("0.00", "0.25", "0.50", "0.75", "1.00")) +
+  theme(axis.title.x = element_blank(),
+        axis.title.y = element_blank(),
+        legend.title = element_blank(),
+        legend.box.margin = margin(),
+        plot.title = element_text(hjust = 0.5),
+        axis.line = element_blank())
+
+# Display the age-based mosaic plots
+
+age_DD_lo
+age_DD_up
+age_DD_lo_win
+age_DD_up_win
+```
+
+Figure 2: The above eight mosaic plots subset by gender and age. HR represents House of Representatives, the lower chamber of Japanese parliament, whereas HC represents the House of Councillors, the upper chamber of Japanese parliament. The figures also compare the share of candidates that ran in SNTV (multi-member)/PR districts versus the proportion of winners from either district.
+
+## Bibliography
