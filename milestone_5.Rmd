@@ -39,6 +39,18 @@ DD_up <- read_csv("actual-upper-2013-allcandidates.csv")
 
 ```
 
+
+## Replication Paper Overview: *Identifying voter preferences for politicians’ personal attributes: a conjoint experiment in Japan*
+
+In Teppei Yamamoto and Daniel Smith's paper, they explore whether voter preferences for politicians' characteristics impact their decision on who to vote for, and the magnitude of this effect.
+All analysis for this paper, while it is still in progress, can be found at the working Github repo.^[Working repository can be found here: https://github.com/caievelyn/milestone]
+
+**Description of Replication Paper**:
+
+**Replicated Graphic/Table**:
+Below, please find a replicated graphic that displays the difference in average treatment effects of certain variables based on a politician's gender (*Fig. 1*). *Fig. 2* displays a correlation matrix, the likes of which can be found in the Appendix. *Fig. 3* is an image file that is a screenshot of the replication paper's Appendix, for ease of comparison to the replicated graph in *Fig. 2*.
+
+
 ```{r pre_processing_data, include = FALSE}
 ### Recoding Variables
 
@@ -139,7 +151,7 @@ DD_up_win <- DD_up %>%
   filter(win == 1)
 ```
 
-```{r conjoint_data, echo = FALSE}
+```{r conjoint_data, include = FALSE, cache = TRUE}
 load("conjoint.RData")
 
 # Rename the volumns with multiple strings for names, which confuses cj()
@@ -163,10 +175,12 @@ x <- plot(rbind(DD_cj, DD_diff)) +
   ggplot2::facet_wrap(~BY, ncol = 3L) +
   ggplot2::labs(title = "AMCE by Gender",
                 caption = "Data from Horiuchi, Smith, & Yamamato via Dataverse") +
-  ggthemes::theme_few()
+  ggthemes::theme_few() +
+  ggplot2::theme(legend.position = "right",
+                 axis.text = element_text(size=10))
 ```
 
-```{r display, out.height= "150%"}
+```{r display, echo = FALSE, fig.width= 10, fig.height = 8.5}
 
 # Display the plot
 
