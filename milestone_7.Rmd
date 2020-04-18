@@ -4,6 +4,8 @@ author: "Evelyn Cai"
 date: "4/17/2020"
 output:
   bookdown::pdf_book:
+    includes:  
+      in_header: my_header.tex
     keep_tex: true
     toc: False
 bibliography: ["conjoint-method.bib", "japan.bib", "salience.bib", "gender.bib", "electoral.bib", "leeper.bib"]
@@ -46,7 +48,7 @@ DD_up <- read_csv("actual-upper-2013-allcandidates.csv")
 
 **Introduction**:
 
-  In Yusaku Horiuchi, Teppei Yamamoto and Daniel Smith's (2020) paper, they conclude from the difference between their conjoint survey results and observational data that Japanese voters' voting preferences are dependent on external factors such as party recruitment. They explore the effect of a candidate's gender on their electability likelihood and its interaction with other variables, such as awareness of Japan's electoral groups. While it is commonly established that the personal attributes of political candidates do have an impact on voter choice, as they portray in their literature review, they also highlight the fact that certain traits' interaction effects may provide for an explanation for why candidates were chosen (@R-yamamoto). For example, men were "awarded" more for political experience than women, which may explain the severe lack of female representation despite the consistency in gender preferences from the conjoint survey (@R-yamamoto). sThey conducted conjoint analyses involving Average Marginal Component Effects (AMCEs) and Average Component Interaction Effects (ACIEs) to determine the effect of different variables on candidate selection likelihood, and whether said variables interacted with each othe in which ways.
+  In Yusaku Horiuchi, Teppei Yamamoto and Daniel Smith's (2020) paper, they conclude from the difference between their conjoint survey results and observational data that Japanese voters' voting preferences are dependent on external factors such as party recruitment. They explored the effect of a candidate's gender on their electability likelihood and its interaction with other variables, such as awareness of Japan's electoral groups. While it is commonly established that the personal attributes of political candidates do have an impact on voter choice, as they portray in their literature review, they also highlight the fact that certain traits' interaction effects may provide for an explanation for why candidates were chosen (@R-yamamoto). For example, men were "awarded" more for political experience than women, which may explain the severe lack of female representation despite the consistency in gender preferences from the conjoint survey (@R-yamamoto). They conducted conjoint analyses involving Average Marginal Component Effects (AMCEs) and Average Component Interaction Effects (ACIEs) to determine the effect of different variables on candidate selection likelihood, and whether said variables interacted with each othe in which ways.
   
   **Literature Review**:
   
@@ -60,9 +62,18 @@ According to Leeper *et al.* (2019), a flaw with interpreting "differences in co
 
 
 **Appendix**:
-Below, please find a replicated graphic that displays the difference in average treatment effects of certain variables based on a politician's gender (*Fig. 1*). *Fig. 2* displays 8 mosaic plots, the likes of which can be found in the Appendix. *Fig. 3* is an image file that is a screenshot of the replication paper's Appendix, for ease of comparison to replicated graphs in *Fig. 2*. *Fig. 4* is a replication of the co-correlation matrix that determines the correlation between two different variables, as many variables such as age, gender, celebrity status, family political ties, occupation, party, education, etc. were examined. All analysis for this paper, while it is still in progress, can be found at the working Github repo.^[Working repository can be found here: https://github.com/caievelyn/milestone]
+Below, please find a replicated graphic that displays the difference in average treatment effects of certain variables based on a politician's gender (*Fig. 1*). *Fig. 2* displays 8 mosaic plots, the likes of which can be found in the Appendix. *Fig. 3* is a replication of the co-correlation matrix that determines the correlation between two different variables, as many variables such as age, gender, celebrity status, family political ties, occupation, party, education, etc. were examined. *Figs. 4 & 5* relate to the extension of the paper, which takes a look at marginal means instead of the metric of AMCEs. All analysis for this paper, while it is still in progress, can be found at the working Github repo.^[Working repository can be found here: https://github.com/caievelyn/milestone]
 
 I would also like to clarify which findings of the paper I was able to replicate. The main findings, which present themselves in the form of the conjoint AMCE charts pictured directly below, were able to be replicated, as well as the mosaic and co-correlation matrices of the paper. Charts not include in this replication are additional mosaic plots, since the original Appendix had many based off of variables other than age and gender.
+
+
+
+
+
+
+
+
+
 
 ```{r pre_processing_data, include = FALSE}
 ### Recoding Variables
@@ -163,7 +174,6 @@ DD_lo_win <- DD_lo %>%
 DD_up_win <- DD_up %>%
   filter(win == 1)
 ```
-
 ```{r conjoint_data, include = FALSE, cache = TRUE}
 load("conjoint.RData")
 
@@ -201,8 +211,7 @@ x <- plot(rbind(DD_cj, DD_diff)) +
   scale_x_continuous(seq(-.3, .1, by = 0.1), labels = c("-.3", "-.2", "-.1", "0", ".1")) +
   geom_vline(xintercept = 0, linetype="dotted", color = "red")
 ```
-
-```{r display, echo = FALSE, fig.width= 10, fig.height = 8.5, fig.cap = "The first two columns on the left display the average treatment effects for different variables, keeping the gender of the candidate constant. The third column displays the difference in average treatment effect, subtracting that of males to that of females. As you can see, party and age have large effects on candidate selection. However, when taking the different in AMCEs, there is no substantial difference between traits that are desired in male and female candidates. The average treatment effect can be interpreted as the 'boost' a certain characteristic gives a candidate; negative values indicate hurting the candidate's chances of being chosen, while positive values reflect desirable traits."}
+```{r display, echo = FALSE, fig.height = 8.5, fig.width = 10, fig.cap = "The first two columns on the left display the average treatment effects for different variables, keeping the gender of the candidate constant. The third column displays the difference in average treatment effect, subtracting that of males to that of females. As you can see, party and age have large effects on candidate selection. However, when taking the different in AMCEs, there is no substantial difference between traits that are desired in male and female candidates. The average treatment effect can be interpreted as the 'boost' a certain characteristic gives a candidate; negative values indicate hurting the candidate's chances of being chosen, while positive values reflect desirable traits."}
 
 # Display the plot
 
@@ -352,10 +361,6 @@ age_DD_up_win
 
 *Figure 2*: The above eight mosaic plots subset by gender and age. HR represents House of Representatives, the lower chamber of Japanese parliament, whereas HC represents the House of Councillors, the upper chamber of Japanese parliament. The figures also compare the share of candidates that ran in SNTV (multi-member)/PR districts versus the proportion of winners from either district.
 
-![](example_appendix.PNG)
-
-*Figure 3*: Screenshot from Replication Paper for Comparison of Mosaic Plots
-
 
 ```{r correlation_matrix, echo = FALSE}
 # Make correlation matrix (Code mainly unaltered from replication file)
@@ -393,11 +398,9 @@ for(i in c(2,4)){
 
 ```
 
-*Figure 4*: Co-correlation matrix providing the correlation coefficients between two variables. Negative values are shaded in red and positive values are shaded in blue. The intensity of the color corresponds to the magnitude of the correation coefficient.
+*Figure 3*: Co-correlation matrix providing the correlation coefficients between two variables. Negative values are shaded in red and positive values are shaded in blue. The intensity of the color corresponds to the magnitude of the correation coefficient.
 
 ## Extension of the Paper:
-
-The below *Figure 5* demonstrates the marginal means graph 
 
 ```{r mm, echo=FALSE, cache= FALSE}
 
@@ -431,7 +434,7 @@ mm_1 <- plot(DD_mm) +
 
 # Plot differences in mm graph
 mm_2 <- plot(DD_mm_diff) +
-  labs(title = "Difference in Marginal Means by Gender",
+  labs(title = "Difference in Marginal\nMeans by Gender",
                 caption = "Data from Horiuchi, Smith, & Yamamato via Dataverse") +
   theme_minimal() +
   theme(legend.position = "none",
@@ -445,7 +448,20 @@ mm_2 <- plot(DD_mm_diff) +
         panel.grid.minor = element_line(size = 0.5, linetype = 'solid', colour = "white")) +
   geom_vline(xintercept = 0, linetype="dotted", color = "red")
 
-
+# Plot just the AMCE difference graph
+z <- plot(DD_diff) +
+  labs(title = "Difference in AMCEs\nby Gender",
+                caption = "Data from Horiuchi, Smith, & Yamamato via Dataverse") +
+  theme_minimal() +
+  theme(legend.position = "none",
+        axis.title.x = element_blank(),
+        axis.text = element_text(size=10),
+        panel.background = element_rect(fill = "gray95",
+                                        colour = "gray95",
+                                        size = 2,
+                                        linetype = "solid"),
+        panel.grid.major = element_line(size = 0.5, linetype = 'solid', colour = "white"), 
+        panel.grid.minor = element_line(size = 0.5, linetype = 'solid', colour = "white")) +  geom_vline(xintercept = 0, linetype="dotted", color = "red")
 ```
 
 
@@ -455,7 +471,16 @@ mm_2 <- plot(DD_mm_diff) +
 mm_1 + mm_2 + plot_layout(widths = c(2, 1))
 ```
 
-*Figures 5 & 6*: The top graphic displays the marginal means graph. For comparison, the bottom graphic shows the difference in marginal means graph and the difference in AMCE graph. 
+*Figure 4*: The top graphic displays the marginal means graph. As you can see, notable differences between the genders include the effect of political experience. Interestingly, in the marginal means graph (we shall denote them as MM graphs), the baseline of "No experience" seems to punish men more so than women. This is interesting because women are more likely than men to be part of dynastic political families, and supports the notion that young first-timer female candidates hit a so-called "bamboo ceiling" as their political careers lengthen, according to Horiuchi *et al.* (@R-yamamoto).  
+
+```{r display_3, echo = FALSE, fig.width=8.5, fig.height=6}
+
+# Patchwork align the difference plots
+
+mm_2 + z + plot_layout(widths = c(1, 1))
+
+```
 
 
 ## Bibliography
+
