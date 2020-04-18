@@ -67,14 +67,6 @@ Below, please find a replicated graphic that displays the difference in average 
 I would also like to clarify which findings of the paper I was able to replicate. The main findings, which present themselves in the form of the conjoint AMCE charts pictured directly below, were able to be replicated, as well as the mosaic and co-correlation matrices of the paper. Charts not include in this replication are additional mosaic plots, since the original Appendix had many based off of variables other than age and gender.
 
 
-
-
-
-
-
-
-
-
 ```{r pre_processing_data, include = FALSE}
 ### Recoding Variables
 
@@ -174,24 +166,49 @@ DD_lo_win <- DD_lo %>%
 DD_up_win <- DD_up %>%
   filter(win == 1)
 ```
+
+
 ```{r conjoint_data, include = FALSE, cache = TRUE}
 load("conjoint.RData")
 
 # Rename the volumns with multiple strings for names, which confuses cj()
-
 DD <- DD %>%
   rename("Education" = `Highest Educational Attainment`,
          "Previous_Occupation" = `Prior Occupation`,
          "Parent_Political_Background" = `Parental Political Background`)
 
+#Recode the levels for parental political background, because duplicated level
+#labels aren't compatible with cj.
+DD <- DD %>%
+  mutate(Parent_Political_Background = case_when(Parent_Political_Background == "None" ~ "None",
+                                                 Parent_Political_Background == "National assembly member" ~ "National Assembly Member",
+                                                 Parent_Political_Background == "Prefectural assembly member" ~ "Prefectural Assembly Member",
+                                                 Parent_Political_Background == "Cabinet minister" ~ "Cabinet Minister")) %>%
+  # Refactor experience and party
+  mutate(Experience = fct_relevel(Experience, "No experience", "Formerly in office, 1", "Currently in office, 1", "Formerly in office, 2", "Currently in office, 2", "Formerly in office, 3+", "Currently in office, 3+"),
+         Party = fct_relevel(Party, "Independent", "DPJ", "JCP", "Komeito", 
+                                          "LDP"))
+         
+
+# Create character string to rename y axis.
+
+y_labs <- rev(c("Age:", "(Baseline = 30)", "42", "57", "64", "79",
+            "Experience:", "(Baseline = No experience)", "Formerly in office, 1 term", "Currently in office, 1 term", "Formerly in office, 2 terms", "Currently in office, 2 terms", "Formerly in office, 3+ terms", "Currently in office, 3+ terms", 
+            "Highest Educational Attainment:", "(Baseline = High school)", "Local public univeristy", "Prestigious private university", "University of Tokyo", 
+            "Hometown:", "(Baseline = Inside)", "Outside",
+            "Party:", "(Baseline = Independent)", "DPJ", "JCP", "Komeito", "LDP",
+            "Prior Occupation:", "(Baseline = company employee)", "Business executive", "Celebrity", "Local government employee", "National government employee", "Prefectural assembly member", "Prefectural governor"))
+
 DD_cj <- cj(DD,
-            formula = Y.1 ~ Party + Age + Experience + Hometown + Education + Previous_Occupation,
+            formula = Y.1 ~ Age + Experience + Education + Education + Hometown + Party + Previous_Occupation,
             estimate = "amce",
+            level_order = c("descending"),
             by = ~Gender)
 
 DD_diff <- cj(DD,
-              formula = Y.1 ~ Party + Age + Experience + Hometown + Education + Previous_Occupation,
-              estimate = "amce_diff",
+              formula = Y.1 ~ Age + Experience + Education + Education + Hometown + Party + Previous_Occupation,
+              estimate = "amce_differences",
+              level_order = c("descending"),
               by = ~Gender)
 
 x <- plot(rbind(DD_cj, DD_diff)) +
@@ -209,8 +226,11 @@ x <- plot(rbind(DD_cj, DD_diff)) +
         panel.grid.major = element_line(size = 0.5, linetype = 'solid', colour = "white"), 
         panel.grid.minor = element_line(size = 0.5, linetype = 'solid', colour = "white")) +
   scale_x_continuous(seq(-.3, .1, by = 0.1), labels = c("-.3", "-.2", "-.1", "0", ".1")) +
+  scale_y_discrete(labels = y_labs) +
   geom_vline(xintercept = 0, linetype="dotted", color = "red")
 ```
+
+
 ```{r display, echo = FALSE, fig.height = 8.5, fig.width = 10, fig.cap = "The first two columns on the left display the average treatment effects for different variables, keeping the gender of the candidate constant. The third column displays the difference in average treatment effect, subtracting that of males to that of females. As you can see, party and age have large effects on candidate selection. However, when taking the different in AMCEs, there is no substantial difference between traits that are desired in male and female candidates. The average treatment effect can be interpreted as the 'boost' a certain characteristic gives a candidate; negative values indicate hurting the candidate's chances of being chosen, while positive values reflect desirable traits."}
 
 # Display the plot
@@ -406,14 +426,16 @@ for(i in c(2,4)){
 
 # Calculate marginal means
 DD_mm <- cj(DD,
-            formula = Y.1 ~ Party + Age + Experience + Hometown + Education + Previous_Occupation,
+            formula = Y.1 ~ Age + Experience + Education + Education + Hometown + Party + Previous_Occupation,
             estimate = "mm",
+            level_order = c("descending"),
             by = ~Gender)
 
 # Calculate marginal means differences
 DD_mm_diff <- cj(DD,
-              formula = Y.1 ~ Party + Age + Experience + Hometown + Education + Previous_Occupation,
+              formula = Y.1 ~ Age + Experience + Education + Education + Hometown + Party + Previous_Occupation,
               estimate = "mm_differences",
+              level_order = c("descending"),
               by = ~Gender)
 
 # Plot marginal means graph
@@ -430,6 +452,7 @@ mm_1 <- plot(DD_mm) +
                                         linetype = "solid"),
         panel.grid.major = element_line(size = 0.5, linetype = 'solid', colour = "white"), 
         panel.grid.minor = element_line(size = 0.5, linetype = 'solid', colour = "white")) +
+    scale_y_discrete(labels = y_labs) +
   geom_vline(xintercept = 0.5, linetype="dotted", color = "red")
 
 # Plot differences in mm graph
@@ -446,7 +469,17 @@ mm_2 <- plot(DD_mm_diff) +
                                         linetype = "solid"),
         panel.grid.major = element_line(size = 0.5, linetype = 'solid', colour = "white"), 
         panel.grid.minor = element_line(size = 0.5, linetype = 'solid', colour = "white")) +
+    scale_y_discrete(labels = y_labs) +
   geom_vline(xintercept = 0, linetype="dotted", color = "red")
+
+# Create character string to rename y axis.
+
+y_labs2 <- rev(c("Age:", "42", "57", "64", "79",
+            "Experience:",  "Formerly in office, 1 term", "Currently in office, 1 term", "Formerly in office, 2 terms", "Currently in office, 2 terms", "Formerly in office, 3+ terms", "Currently in office, 3+ terms",
+            "Highest Educational Attainment:", "Local public univeristy", "Prestigious private university", "University of Tokyo", 
+            "Hometown:", "Outside",
+            "Party:", "DPJ", "JCP", "Komeito", "LDP",
+            "Prior Occupation:", "Business executive", "Celebrity", "Local government employee", "National government employee", "Prefectural assembly member", "Prefectural governor"))
 
 # Plot just the AMCE difference graph
 z <- plot(DD_diff) +
@@ -461,7 +494,9 @@ z <- plot(DD_diff) +
                                         size = 2,
                                         linetype = "solid"),
         panel.grid.major = element_line(size = 0.5, linetype = 'solid', colour = "white"), 
-        panel.grid.minor = element_line(size = 0.5, linetype = 'solid', colour = "white")) +  geom_vline(xintercept = 0, linetype="dotted", color = "red")
+        panel.grid.minor = element_line(size = 0.5, linetype = 'solid', colour = "white")) +
+  scale_y_discrete(labels = y_labs2) +
+  geom_vline(xintercept = 0, linetype="dotted", color = "red")
 ```
 
 
@@ -481,6 +516,7 @@ mm_2 + z + plot_layout(widths = c(1, 1))
 
 ```
 
+*Figure 5*: Side-by-side comparison of the marginal means differences graph and the difference in AMCE graph.
 
 ## Bibliography
 
